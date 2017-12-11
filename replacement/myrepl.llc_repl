@@ -9,23 +9,15 @@ void CACHE::llc_initialize_replacement()
     srand(static_cast <uint32_t> (time(0)));
 }
 
-set<uint32_t> ghost_lru;
-set<uint32_t> ghost_two_rand;
-
-uint32_t CACHE::two_random_victim(uint32_t cpu, uint64_t instr_id, uint32_t set, const BLOCK *current_set, uint64_t ip, uint64_t full_addr, uint32_t type)
-{
-    uint32_t victim1;
-    uint32_t victim2;
-    victim1 = rand() % NUM_WAY;
-    victim2 = rand() % NUM_WAY;
-    return (block[set][victim1].lru > block[set][victim2].lru) ? victim1 : victim2;
-}
+// for our custom policy
+//set<uint32_t> ghost_lru;
+//set<uint32_t> ghost_two_rand;
 
 // find replacement victim
 uint32_t CACHE::llc_find_victim(uint32_t cpu, uint64_t instr_id, uint32_t set, const BLOCK *current_set, uint64_t ip, uint64_t full_addr, uint32_t type)
 {
     // baseline LRU
-    return two_random_victim(cpu, instr_id, set, current_set, ip, full_addr, type); 
+    return lfu_victim(cpu, instr_id, set, current_set, ip, full_addr, type); 
 }
 
 // called on every cache hit and cache fill
@@ -59,7 +51,7 @@ void CACHE::llc_update_replacement_state(uint32_t cpu, uint32_t set, uint32_t wa
     if (hit && (type == WRITEBACK)) // writeback hit does not update LRU state
         return;
 
-    return lru_update(set, way);
+    return lfu_update(set, way);
 }
 
 void CACHE::llc_replacement_final_stats()
@@ -68,7 +60,7 @@ void CACHE::llc_replacement_final_stats()
 }
 
 //int count = 0;
-/*
+
 uint32_t CACHE::lfu_victim(uint32_t cpu, uint64_t instr_id, uint32_t set, const BLOCK *current_set, uint64_t ip, uint64_t full_addr, uint32_t type)
 {
     // We're going to start with an inefficient approach of iterating through the cache to find the lowest one each time.
@@ -113,11 +105,11 @@ uint32_t CACHE::lfu_victim(uint32_t cpu, uint64_t instr_id, uint32_t set, const 
     /*if (count == 0) {
         cout << "Victim is " << lfu_index << " with frequency " << lowest_freq << endl; 
     }
-    count = (count + 1) % 100;
+    count = (count + 1) % 100;*/
     return way;
 }
 
 void CACHE::lfu_update(uint32_t set, uint32_t way)
 {
-    //block[set][way].lfu++;
-}*/
+    block[set][way].lfu++;
+}
